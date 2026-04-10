@@ -9,7 +9,7 @@ export function Footer() {
           <div>
             <Link href="/" className="flex items-center gap-2 font-bold text-lg mb-3">
               <BriefcaseBusiness className="h-5 w-5" />
-              JobBoard
+              HirePoint
             </Link>
             <p className="text-sm text-muted-foreground">
               Find your next opportunity or hire top talent.
@@ -40,7 +40,7 @@ export function Footer() {
           </div>
         </div>
         <div className="border-t mt-8 pt-6 text-center text-sm text-muted-foreground">
-          &copy; {new Date().getFullYear()} JobBoard. All rights reserved.
+          &copy; {new Date().getFullYear()} HirePoint. All rights reserved.
         </div>
       </div>
     </footer>

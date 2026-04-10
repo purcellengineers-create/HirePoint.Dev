@@ -17,7 +17,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "JobBoard - Find Your Next Opportunity",
+  title: "HirePoint - Find Your Next Opportunity",
   description:
     "Browse thousands of job listings, apply with one click, and track your applications.",
 };

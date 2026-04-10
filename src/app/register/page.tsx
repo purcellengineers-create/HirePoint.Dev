@@ -94,7 +94,7 @@ export default function RegisterPage() {
         <CardHeader className="text-center">
           <CardTitle className="text-2xl font-bold">Create an account</CardTitle>
           <CardDescription>
-            Join JobBoard to find opportunities or hire talent
+            Join HirePoint to find opportunities or hire talent
           </CardDescription>
         </CardHeader>
         <CardContent>
