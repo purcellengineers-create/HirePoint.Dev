@@ -1,0 +1,57 @@
+steps:
+  - name: "gcr.io/cloud-builders/docker"
+    args:
+      - "build"
+      - "-t"
+      - "gcr.io/$PROJECT_ID/job-board:$COMMIT_SHA"
+      - "-t"
+      - "gcr.io/$PROJECT_ID/job-board:latest"
+      - "./job-board"
+
+  - name: "gcr.io/cloud-builders/docker"
+    args:
+      - "push"
+      - "gcr.io/$PROJECT_ID/job-board:$COMMIT_SHA"
+
+  - name: "gcr.io/cloud-builders/docker"
+    args:
+      - "push"
+      - "gcr.io/$PROJECT_ID/job-board:latest"
+
+  - name: "gcr.io/google.com/cloudsdktool/cloud-sdk"
+    entrypoint: "gcloud"
+    args:
+      - "run"
+      - "deploy"
+      - "job-board"
+      - "--image"
+      - "gcr.io/$PROJECT_ID/job-board:$COMMIT_SHA"
+      - "--region"
+      - "${_REGION}"
+      - "--platform"
+      - "managed"
+      - "--allow-unauthenticated"
+      - "--port"
+      - "8080"
+      - "--memory"
+      - "512Mi"
+      - "--cpu"
+      - "1"
+      - "--min-instances"
+      - "0"
+      - "--max-instances"
+      - "3"
+      - "--set-env-vars"
+      - "NODE_ENV=production,DATABASE_URL=file:/data/app.db"
+      - "--set-secrets"
+      - "NEXTAUTH_SECRET=nextauth-secret:latest,NEXTAUTH_URL=nextauth-url:latest"
+
+substitutions:
+  _REGION: us-central1
+
+images:
+  - "gcr.io/$PROJECT_ID/job-board:$COMMIT_SHA"
+  - "gcr.io/$PROJECT_ID/job-board:latest"
+
+options:
+  logging: CLOUD_LOGGING_ONLY

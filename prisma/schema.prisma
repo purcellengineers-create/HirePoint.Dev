@@ -1,0 +1,101 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+model User {
+  id           String        @id @default(cuid())
+  email        String        @unique
+  passwordHash String
+  name         String
+  role         String        @default("JOB_SEEKER") // JOB_SEEKER | EMPLOYER
+  avatar       String?
+  bio          String?
+  createdAt    DateTime      @default(now())
+  profile      Profile?
+  company      Company?
+  applications Application[]
+  savedJobs    SavedJob[]
+  notifications Notification[]
+}
+
+model Profile {
+  id         String  @id @default(cuid())
+  userId     String  @unique
+  user       User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  resume     String?
+  skills     String  @default("[]") // JSON array stored as string
+  experience String?
+  location   String?
+  phone      String?
+}
+
+model Company {
+  id          String @id @default(cuid())
+  ownerId     String @unique
+  owner       User   @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  name        String
+  logo        String?
+  description String?
+  website     String?
+  industry    String?
+  size        String?
+  jobs        Job[]
+}
+
+model Job {
+  id           String        @id @default(cuid())
+  companyId    String
+  company      Company       @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  title        String
+  description  String
+  location     String
+  type         String        @default("FULL_TIME") // FULL_TIME | PART_TIME | CONTRACT | REMOTE
+  salaryMin    Int?
+  salaryMax    Int?
+  category     String
+  status       String        @default("OPEN") // OPEN | CLOSED | DRAFT
+  postedAt     DateTime      @default(now())
+  expiresAt    DateTime?
+  applications Application[]
+  savedBy      SavedJob[]
+}
+
+model Application {
+  id          String   @id @default(cuid())
+  jobId       String
+  job         Job      @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  coverLetter String?
+  resumeUrl   String?
+  status      String   @default("PENDING") // PENDING | REVIEWED | INTERVIEW | OFFERED | REJECTED
+  appliedAt   DateTime @default(now())
+
+  @@unique([jobId, userId])
+}
+
+model SavedJob {
+  id     String @id @default(cuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  jobId  String
+  job    Job    @relation(fields: [jobId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, jobId])
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type      String
+  message   String
+  read      Boolean  @default(false)
+  link      String?
+  createdAt DateTime @default(now())
+}
