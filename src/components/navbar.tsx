@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Menu, BriefcaseBusiness, Bell } from "lucide-react";
 import { useState, useEffect } from "react";
 import { Menu as MenuPrimitive } from "@base-ui/react/menu";
@@ -26,9 +27,14 @@ const publicLinks = [
 
 export function Navbar() {
   const pathname = usePathname();
-  const { data: session } = useSession();
+  const { data: session, status } = useSession();
   const [unreadCount, setUnreadCount] = useState(0);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     if (!session?.user) return;
@@ -47,6 +53,136 @@ export function Navbar() {
     .join("")
     .toUpperCase()
     .slice(0, 2);
+
+  function renderAuthSection() {
+    if (!mounted || status === "loading") {
+      return <Skeleton className="h-8 w-24 rounded-lg" />;
+    }
+
+    if (session?.user) {
+      return (
+        <>
+          <Link
+            href="/dashboard/notifications"
+            className={cn(
+              buttonVariants({ variant: "ghost", size: "icon" }),
+              "relative"
+            )}
+          >
+            <Bell className="h-5 w-5" />
+            {unreadCount > 0 && (
+              <span className="absolute -top-1 -right-1 h-5 w-5 rounded-full bg-destructive text-[11px] font-bold text-white flex items-center justify-center">
+                {unreadCount > 9 ? "9+" : unreadCount}
+              </span>
+            )}
+          </Link>
+          <DropdownMenu>
+            <MenuPrimitive.Trigger className="relative h-9 w-9 rounded-full cursor-pointer">
+              <Avatar className="h-9 w-9">
+                <AvatarFallback>{initials || "U"}</AvatarFallback>
+              </Avatar>
+            </MenuPrimitive.Trigger>
+            <DropdownMenuContent align="end" className="w-48">
+              <div className="px-2 py-1.5">
+                <p className="text-sm font-medium">{session.user.name}</p>
+                <p className="text-xs text-muted-foreground">
+                  {session.user.email}
+                </p>
+              </div>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem>
+                <Link href={dashboardHref} className="w-full">
+                  Dashboard
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem>
+                <Link href="/profile" className="w-full">
+                  Profile
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={() => signOut()}>
+                Sign out
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </>
+      );
+    }
+
+    return (
+      <>
+        <Link href="/login" className={buttonVariants({ variant: "ghost" })}>
+          Sign in
+        </Link>
+        <Link href="/register" className={buttonVariants()}>
+          Get Started
+        </Link>
+      </>
+    );
+  }
+
+  function renderMobileAuthSection() {
+    if (!mounted || status === "loading") {
+      return <Skeleton className="h-8 w-full rounded-lg mt-2" />;
+    }
+
+    if (session?.user) {
+      return (
+        <>
+          <Link
+            href={dashboardHref}
+            className="text-sm font-medium py-2"
+            onClick={() => setMobileOpen(false)}
+          >
+            Dashboard
+          </Link>
+          <Link
+            href="/profile"
+            className="text-sm font-medium py-2"
+            onClick={() => setMobileOpen(false)}
+          >
+            Profile
+          </Link>
+          {session.user.role === "EMPLOYER" && (
+            <Link
+              href="/jobs/post"
+              className="text-sm font-medium py-2"
+              onClick={() => setMobileOpen(false)}
+            >
+              Post a Job
+            </Link>
+          )}
+          <Button
+            variant="outline"
+            onClick={() => signOut()}
+            className="mt-2"
+          >
+            Sign out
+          </Button>
+        </>
+      );
+    }
+
+    return (
+      <>
+        <Link
+          href="/login"
+          className={cn(buttonVariants({ variant: "outline" }), "mt-2")}
+          onClick={() => setMobileOpen(false)}
+        >
+          Sign in
+        </Link>
+        <Link
+          href="/register"
+          className={buttonVariants()}
+          onClick={() => setMobileOpen(false)}
+        >
+          Get Started
+        </Link>
+      </>
+    );
+  }
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -71,7 +207,7 @@ export function Navbar() {
                 {link.label}
               </Link>
             ))}
-            {session?.user?.role === "EMPLOYER" && (
+            {mounted && session?.user?.role === "EMPLOYER" && (
               <Link
                 href="/jobs/post"
                 className={cn(
@@ -88,68 +224,16 @@ export function Navbar() {
         </div>
 
         <div className="hidden md:flex items-center gap-3">
-          {session?.user ? (
-            <>
-              <Link
-                href="/dashboard/notifications"
-                className={cn(
-                  buttonVariants({ variant: "ghost", size: "icon" }),
-                  "relative"
-                )}
-              >
-                <Bell className="h-5 w-5" />
-                {unreadCount > 0 && (
-                  <span className="absolute -top-1 -right-1 h-5 w-5 rounded-full bg-destructive text-[11px] font-bold text-white flex items-center justify-center">
-                    {unreadCount > 9 ? "9+" : unreadCount}
-                  </span>
-                )}
-              </Link>
-              <DropdownMenu>
-                <MenuPrimitive.Trigger className="relative h-9 w-9 rounded-full cursor-pointer">
-                  <Avatar className="h-9 w-9">
-                    <AvatarFallback>{initials || "U"}</AvatarFallback>
-                  </Avatar>
-                </MenuPrimitive.Trigger>
-                <DropdownMenuContent align="end" className="w-48">
-                  <div className="px-2 py-1.5">
-                    <p className="text-sm font-medium">{session.user.name}</p>
-                    <p className="text-xs text-muted-foreground">
-                      {session.user.email}
-                    </p>
-                  </div>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem>
-                    <Link href={dashboardHref} className="w-full">Dashboard</Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem>
-                    <Link href="/profile" className="w-full">Profile</Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={() => signOut()}>
-                    Sign out
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </>
-          ) : (
-            <>
-              <Link
-                href="/login"
-                className={buttonVariants({ variant: "ghost" })}
-              >
-                Sign in
-              </Link>
-              <Link href="/register" className={buttonVariants()}>
-                Get Started
-              </Link>
-            </>
-          )}
+          {renderAuthSection()}
         </div>
 
         {/* Mobile */}
         <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
           <SheetPrimitive.Trigger
-            className={cn(buttonVariants({ variant: "ghost", size: "icon" }), "md:hidden")}
+            className={cn(
+              buttonVariants({ variant: "ghost", size: "icon" }),
+              "md:hidden"
+            )}
           >
             <Menu className="h-5 w-5" />
           </SheetPrimitive.Trigger>
@@ -165,57 +249,7 @@ export function Navbar() {
                   {link.label}
                 </Link>
               ))}
-              {session?.user ? (
-                <>
-                  <Link
-                    href={dashboardHref}
-                    className="text-sm font-medium py-2"
-                    onClick={() => setMobileOpen(false)}
-                  >
-                    Dashboard
-                  </Link>
-                  <Link
-                    href="/profile"
-                    className="text-sm font-medium py-2"
-                    onClick={() => setMobileOpen(false)}
-                  >
-                    Profile
-                  </Link>
-                  {session.user.role === "EMPLOYER" && (
-                    <Link
-                      href="/jobs/post"
-                      className="text-sm font-medium py-2"
-                      onClick={() => setMobileOpen(false)}
-                    >
-                      Post a Job
-                    </Link>
-                  )}
-                  <Button
-                    variant="outline"
-                    onClick={() => signOut()}
-                    className="mt-2"
-                  >
-                    Sign out
-                  </Button>
-                </>
-              ) : (
-                <>
-                  <Link
-                    href="/login"
-                    className={cn(buttonVariants({ variant: "outline" }), "mt-2")}
-                    onClick={() => setMobileOpen(false)}
-                  >
-                    Sign in
-                  </Link>
-                  <Link
-                    href="/register"
-                    className={buttonVariants()}
-                    onClick={() => setMobileOpen(false)}
-                  >
-                    Get Started
-                  </Link>
-                </>
-              )}
+              {renderMobileAuthSection()}
             </nav>
           </SheetContent>
         </Sheet>
