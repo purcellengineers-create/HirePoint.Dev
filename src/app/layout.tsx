@@ -22,6 +22,19 @@ export const metadata: Metadata = {
     "Browse thousands of job listings, apply with one click, and track your applications.",
 };
 
+const stripExtensionAttrs = `
+(function(){
+  document.querySelectorAll('[data-cursor-ref]').forEach(function(el){el.removeAttribute('data-cursor-ref')});
+  new MutationObserver(function(muts){
+    for(var i=0;i<muts.length;i++){
+      var m=muts[i];
+      if(m.type==='attributes'&&m.attributeName&&m.attributeName.startsWith('data-cursor-'))m.target.removeAttribute(m.attributeName);
+      if(m.type==='childList')m.addedNodes.forEach(function(n){if(n.removeAttribute){n.querySelectorAll&&n.querySelectorAll('[data-cursor-ref]').forEach(function(el){el.removeAttribute('data-cursor-ref')})}});
+    }
+  }).observe(document.documentElement,{attributes:true,attributeFilter:['data-cursor-ref'],childList:true,subtree:true});
+})();
+`;
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -33,7 +46,12 @@ export default function RootLayout({
       suppressHydrationWarning
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col">
+      <head>
+        {process.env.NODE_ENV === "development" && (
+          <script dangerouslySetInnerHTML={{ __html: stripExtensionAttrs }} />
+        )}
+      </head>
+      <body suppressHydrationWarning className="min-h-full flex flex-col">
         <Providers>
           <Navbar />
           <main className="flex-1">{children}</main>
